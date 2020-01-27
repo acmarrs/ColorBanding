@@ -1,0 +1,8 @@
+/.vs/*
+/intermediate/*
+/bin/ColorBanding.iobj
+/bin/ColorBanding.ipdb
+/bin/ColorBanding.pdb
+/bin/ColorBanding_d.exe
+/bin/ColorBanding_d.ilk
+/bin/ColorBanding_d.pdb

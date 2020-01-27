@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\thirdparty\imgui\imgui.cpp">
+      <Filter>Source Files\thirdparty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdparty\imgui\imgui_demo.cpp">
+      <Filter>Source Files\thirdparty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdparty\imgui\imgui_draw.cpp">
+      <Filter>Source Files\thirdparty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdparty\imgui\imgui_impl_dx12.cpp">
+      <Filter>Source Files\thirdparty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdparty\imgui\imgui_impl_win32.cpp">
+      <Filter>Source Files\thirdparty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdparty\imgui\imgui_widgets.cpp">
+      <Filter>Source Files\thirdparty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Graphics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Structures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\UI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\thirdparty\dxc\dxcapi.h">
+      <Filter>Header Files\thirdparty\dxc</Filter>
+    </ClInclude>
+    <ClInclude Include="include\thirdparty\dxc\dxcapi.use.h">
+      <Filter>Header Files\thirdparty\dxc</Filter>
+    </ClInclude>
+    <ClInclude Include="include\thirdparty\imgui\imgui.h">
+      <Filter>Header Files\thirdparty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\thirdparty\imgui\imconfig.h">
+      <Filter>Header Files\thirdparty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\thirdparty\imgui\imgui_impl_dx12.h">
+      <Filter>Header Files\thirdparty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\thirdparty\imgui\imgui_impl_win32.h">
+      <Filter>Header Files\thirdparty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\thirdparty\imgui\imgui_internal.h">
+      <Filter>Header Files\thirdparty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\thirdparty\imgui\imstb_rectpack.h">
+      <Filter>Header Files\thirdparty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\thirdparty\imgui\imstb_textedit.h">
+      <Filter>Header Files\thirdparty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\thirdparty\imgui\imstb_truetype.h">
+      <Filter>Header Files\thirdparty\imgui</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{20486dc4-7c3b-44cd-981f-bfa6f768b99b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{2f28fcd9-935d-476c-a432-75b34cb466c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{07a62643-0110-4a15-a9c1-de0f3a57cd19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\thirdparty">
+      <UniqueIdentifier>{1851b5f5-d1e4-493a-b9be-076a513403f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\thirdparty\dxc">
+      <UniqueIdentifier>{5e891ee0-14ba-4927-a6b8-326ada1bce59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\thirdparty\imgui">
+      <UniqueIdentifier>{da8cae53-261c-4d7c-aee4-125812a76208}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\thirdparty">
+      <UniqueIdentifier>{4836971b-96c2-4de9-a46e-40c8d1430765}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\thirdparty\imgui">
+      <UniqueIdentifier>{d91c9579-a386-4f74-aade-20f7765ed375}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shaders\ColorBanding.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+</Project>
