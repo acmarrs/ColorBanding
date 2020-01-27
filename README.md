@@ -2,7 +2,7 @@
 
 A simple D3D12 sample application that demonstrates how to use white and blue noise to mitigate color banding when rendering in SDR. To learn more, see the blog post at: http://www.visualextract.com/posts/color-banding/
 
-After building and running the code, first thing I recommend you do is load up the Nsight Graphics project file (IntroToDXR.nsight-gfxproj), and capture a frame of the application running. This will provide a clear view of exactly what is happening as the application is running. [You can download Nsight Graphics here](https://developer.nvidia.com/nsight-graphics).
+After building and running the code, first thing I recommend you do is load up the Nsight Graphics project file (ColorBanding.nsight-gfxproj), and capture a frame of the application running. This will provide a clear view of exactly what is happening as the application is running. [You can download Nsight Graphics here](https://developer.nvidia.com/nsight-graphics).
 
 ## Requirements
 
