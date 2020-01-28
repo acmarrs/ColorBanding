@@ -84,6 +84,9 @@
     <ClInclude Include="include\thirdparty\imgui\imstb_truetype.h">
       <Filter>Header Files\thirdparty\imgui</Filter>
     </ClInclude>
+    <ClInclude Include="include\thirdparty\stb_image.h">
+      <Filter>Header Files\thirdparty</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Shaders">

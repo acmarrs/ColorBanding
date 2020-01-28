@@ -119,6 +119,7 @@
     <ClInclude Include="include\thirdparty\imgui\imstb_rectpack.h" />
     <ClInclude Include="include\thirdparty\imgui\imstb_textedit.h" />
     <ClInclude Include="include\thirdparty\imgui\imstb_truetype.h" />
+    <ClInclude Include="include\thirdparty\stb_image.h" />
     <ClInclude Include="include\UI.h" />
     <ClInclude Include="include\Utils.h" />
     <ClInclude Include="include\Window.h" />
