@@ -37,172 +37,167 @@
 #endif
 
 
-float sign(float v)
-{
-	if (v < 0) return -1;
-	if (v > 0) return 1;
-
-	return 0;
-}
-
-class D3D12Application 
+class D3D12Application
 {
 public:
-	
-	void Init(ConfigInfo &config)
-	{
-		// Create a new window
-		HRESULT hr = Window::Create(config.width, config.height, config.instance, window, L"Color Banding");
-		Utils::Validate(hr, L"Error: failed to create window!");
 
-		// Initialize command line settings
-		d3d.width = config.width;
-		d3d.height = config.height;
-		d3d.vsync = config.vsync;
+    void Init(ConfigInfo &config)
+    {
+        // Create a new window
+        HRESULT hr = Window::Create(config.width, config.height, config.instance, window, L"Color Banding and Dithering");
+        Utils::Validate(hr, L"Error: failed to create window!");
 
-		// Initialize constants
-		constants.lightPosition = DirectX::XMFLOAT3((float)d3d.width / 2.f, 50.f, (float)d3d.height / 2.f);		
-		constants.color = DirectX::XMFLOAT3(0.04f, 0.3f, 1.f);
-		constants.resolutionX = d3d.width;
-		constants.frameNumber = 1;
-		constants.useNoise = 0;
-		constants.showNoise = 0;
-		constants.noiseType = 1;
+        // Initialize command line settings
+        d3d.width = config.width;
+        d3d.height = config.height;
+        d3d.vsync = config.vsync;
 
-		// 8-bits provides 256 possible values (per channel), so the maximum difference between
-		// any two colors is 1/256 (again, per channel). We insert noise into each channel in the range [0, 1/256]
-		// to approximate values between the range representable by the 8-bit format.
-		constants.noiseScale = (1.f / 256.f);
+        // Initialize constants
+        constants.lightPosition = DirectX::XMFLOAT3((float)d3d.width / 2.f, 50.f, (float)d3d.height / 2.f);
+        constants.color = DirectX::XMFLOAT3(0.04f, 0.3f, 1.f);
+        constants.resolutionX = d3d.width;
+        constants.frameNumber = 1;
+        constants.useDithering = 1;
+        constants.showNoise = 0;
+        constants.noiseType = 0;
+        constants.distributionType = 0;
+        constants.useTonemapping = 1;
 
-		// Initialize the dxc shader compiler
-		D3DShaders::Init_Shader_Compiler(shaderCompiler);
+        // 8-bits provides 256 possible values (per channel), so the maximum difference between
+        // any two colors is 1/256 (again, per channel). We insert noise into each channel in the range [0, 1/256]
+        // to approximate values between the range representable by the 8-bit format.
+        constants.noiseScale = (1.f / 256.f);
 
-		// Initialize D3D12
-		D3D12::Create_Device(d3d);
-		D3D12::Create_Command_Queue(d3d);
-		D3D12::Create_Command_Allocator(d3d);		
-		D3D12::Create_CommandList(d3d);
-		D3D12::Create_Viewport(d3d);
-		D3D12::Create_Scissor(d3d);	
-		D3D12::Create_SwapChain(d3d, window);
-		D3D12::Create_Fence(d3d);
-		D3D12::Reset_CommandList(d3d);
+        // Initialize the dxc shader compiler
+        D3DShaders::Init_Shader_Compiler(shaderCompiler);
 
-		// Create common resources
-		D3DResources::Create_Descriptor_Heaps(d3d, resources);
-		D3DResources::Create_BackBuffer_RTV(d3d, resources);
-		D3DResources::Load_Shaders(resources, shaderCompiler);
-		D3DResources::Create_PSO(d3d, resources);
-		D3DResources::Create_ConstantBuffer(d3d, resources, constants);
+        // Initialize D3D12
+        D3D12::Create_Device(d3d);
+        D3D12::Create_Command_Queue(d3d);
+        D3D12::Create_Command_Allocator(d3d);
+        D3D12::Create_CommandList(d3d);
+        D3D12::Create_Viewport(d3d);
+        D3D12::Create_Scissor(d3d);
+        D3D12::Create_SwapChain(d3d, window);
+        D3D12::Create_Fence(d3d);
+        D3D12::Reset_CommandList(d3d);
 
-		// Initialize the UI
-		UI::Init(window, d3d, resources);
+        // Create common resources
+        D3DResources::Create_Descriptor_Heaps(d3d, resources);
+        D3DResources::Create_BackBuffer_RTV(d3d, resources);
+        D3DResources::Load_Shaders(resources, shaderCompiler);
+        D3DResources::Create_PSO(d3d, resources);
+        D3DResources::Create_ConstantBuffer(d3d, resources, constants);
 
-		// Load blue noise textures
-		D3DResources::Load_Blue_Noise_Textures(d3d, resources, 64);
+        // Initialize the UI
+        UI::Init(window, d3d, resources);
 
-		d3d.cmdList->Close();
-		ID3D12CommandList* pGraphicsList = { d3d.cmdList };
-		d3d.cmdQueue->ExecuteCommandLists(1, &pGraphicsList);
+        // Load blue noise textures
+        D3DResources::Load_Blue_Noise_Texture_Array(d3d, resources, 64);
+        D3DResources::Load_Blue_Noise_Texture(d3d, resources);
 
-		D3D12::WaitForGPU(d3d);
-		D3D12::Reset_CommandList(d3d);
-	}
-	
-	void Update()
-	{		
-		if (animateLight)
-		{
-			constants.lightPosition.x = (d3d.width / 2) + 200.f * cos(angle);
-			constants.lightPosition.y = 50.f + 30.f * sin(angle);
-			constants.lightPosition.z = (d3d.height / 2) + 200.f * sin(angle);
-			
-			if(d3d.vsync) angle += 0.01f;
-			else angle += 0.001f;
-		}
+        d3d.cmdList->Close();
+        ID3D12CommandList* pGraphicsList = { d3d.cmdList };
+        d3d.cmdQueue->ExecuteCommandLists(1, &pGraphicsList);
 
-		memcpy(resources.bandingCBStart, &constants, sizeof(BandingConstants));
+        D3D12::WaitForGPU(d3d);
+        D3D12::Reset_CommandList(d3d);
+    }
+    
+    void Update()
+    {
+        if (animateLight)
+        {
+            constants.lightPosition.x = (d3d.width / 2) + 200.f * cos(angle);
+            constants.lightPosition.y = 50.f + 30.f * sin(angle);
+            constants.lightPosition.z = (d3d.height / 2) + 200.f * sin(angle);
+            
+            if(d3d.vsync) angle += 0.01f;
+            else angle += 0.001f;
+        }
 
-		constants.frameNumber++;
-	}
+        memcpy(resources.bandingCBStart, &constants, sizeof(BandingConstants));
 
-	void Render() 
-	{
-		D3D12::Build_CmdList(d3d, resources);
-		UI::Build_CmdList(d3d, resources, constants, animateLight);
+        constants.frameNumber++;
+    }
 
-		D3D12::Submit_CmdList(d3d);
-		D3D12::WaitForGPU(d3d);
+    void Render()
+    {
+        D3D12::Build_CmdList(d3d, resources);
+        UI::Build_CmdList(d3d, resources, constants, animateLight);
 
-		D3D12::Present(d3d);
-		D3D12::MoveToNextFrame(d3d);
-		D3D12::Reset_CommandList(d3d);
-	}
+        D3D12::Submit_CmdList(d3d);
+        D3D12::WaitForGPU(d3d);
 
-	void Cleanup() 
-	{
-		D3D12::WaitForGPU(d3d);
-		CloseHandle(d3d.fenceEvent);
+        D3D12::Present(d3d);
+        D3D12::MoveToNextFrame(d3d);
+        D3D12::Reset_CommandList(d3d);
+    }
 
-		UI::Destroy();
-		D3DResources::Destroy(resources);
-		D3DShaders::Destroy(shaderCompiler);
-		D3D12::Destroy(d3d);
+    void Cleanup() 
+    {
+        D3D12::WaitForGPU(d3d);
+        CloseHandle(d3d.fenceEvent);
 
-		DestroyWindow(window);
-	}
-	
+        UI::Destroy();
+        D3DResources::Destroy(resources);
+        D3DShaders::Destroy(shaderCompiler);
+        D3D12::Destroy(d3d);
+
+        DestroyWindow(window);
+    }
+    
 private:
-	HWND window;
-	D3D12Global d3d = {};
-	D3D12Resources resources = {};
-	BandingConstants constants = {};
-	D3D12ShaderCompilerInfo shaderCompiler;	
+    HWND window;
+    D3D12Global d3d = {};
+    D3D12Resources resources = {};
+    BandingConstants constants = {};
+    D3D12ShaderCompilerInfo shaderCompiler;
 
-	float angle = 0.f;
-	bool animateLight = false;
+    float angle = 0.f;
+    bool animateLight = false;
 };
 
 /**
  * Program entry point
  */
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow) 
-{	
-	UNREFERENCED_PARAMETER(hPrevInstance);
-	UNREFERENCED_PARAMETER(lpCmdLine);
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
+{    
+    UNREFERENCED_PARAMETER(hPrevInstance);
+    UNREFERENCED_PARAMETER(lpCmdLine);
 
-	HRESULT hr = EXIT_SUCCESS;
-	{
-		MSG msg = { 0 };
+    HRESULT hr = EXIT_SUCCESS;
+    {
+        MSG msg = { 0 };
 
-		// Get the application configuration
-		ConfigInfo config;
-		hr = Utils::ParseCommandLine(lpCmdLine, config);
-		if (hr != EXIT_SUCCESS) return hr;
+        // Get the application configuration
+        ConfigInfo config;
+        hr = Utils::ParseCommandLine(lpCmdLine, config);
+        if (hr != EXIT_SUCCESS) return hr;
 
-		// Initialize
-		D3D12Application app;
-		app.Init(config);
+        // Initialize
+        D3D12Application app;
+        app.Init(config);
 
-		// Main loop
-		while (WM_QUIT != msg.message) 
-		{
-			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) 
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
+        // Main loop
+        while (WM_QUIT != msg.message)
+        {
+            if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) 
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
 
-			app.Update();
-			app.Render();
-		}
+            app.Update();
+            app.Render();
+        }
 
-		app.Cleanup();
-	}
+        app.Cleanup();
+    }
 
 #if defined _CRTDBG_MAP_ALLOC
-	_CrtDumpMemoryLeaks();
+    _CrtDumpMemoryLeaks();
 #endif
 
-	return hr;
+    return hr;
 }

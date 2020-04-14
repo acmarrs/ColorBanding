@@ -35,7 +35,7 @@
 
 namespace UI
 {
-	void Init(HWND &window, D3D12Global &d3d, D3D12Resources &resources);
-	void Build_CmdList(D3D12Global &d3d, D3D12Resources &resources, BandingConstants &constants, bool &animateLight);
-	void Destroy();
+    void Init(HWND &window, D3D12Global &d3d, D3D12Resources &resources);
+    void Build_CmdList(D3D12Global &d3d, D3D12Resources &resources, BandingConstants &constants, bool &animateLight);
+    void Destroy();
 }

@@ -25,159 +25,209 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "Common.hlsl"
+
 // ---[ Structures ]---
 
 struct PSInput
 {
-	float4 position : SV_POSITION;
-	float2 tex0		: TEXCOORD;
+    float4 position : SV_POSITION;
+    float2 tex0        : TEXCOORD;
 };
 
 // ---[ Resources ]---
 
 cbuffer BandingConstants : register(b0)
 {
-	float3	lightPosition;
-	float	noiseScale;
-	float3	color;
-	uint	resolutionX;
-	uint	frameNumber;
-	int		useNoise;
-	int		showNoise;
-	int		noiseType;
+    float3  lightPosition;
+    float   noiseScale;
+    float3  color;
+    uint    resolutionX;
+    uint    frameNumber;
+    int     useDithering;
+    int     showNoise;
+    int     noiseType;
+    int     distributionType;
+    int     useTonemapping;
+    int2    pad;
 };
 
-Texture2DArray<float4> blueNoise : register(t0);
+Texture2D<float4> blueNoise : register(t0);
+Texture2DArray<float4> blueNoiseArray : register(t1);
 
 // ---[ Vertex Shader ]---
 
 PSInput VS(uint VertID : SV_VertexID)
 {
-	float div2 = (VertID / 2);
-	float mod2 = (VertID % 2);
+    float div2 = (VertID / 2);
+    float mod2 = (VertID % 2);
 
-	PSInput result;
-	result.position.x = (mod2 * 4.f) - 1.f;
-	result.position.y = (div2 * 4.f) - 1.f;
-	result.position.zw = float2(0.f, 1.f);
+    PSInput result;
+    result.position.x = (mod2 * 4.f) - 1.f;
+    result.position.y = (div2 * 4.f) - 1.f;
+    result.position.zw = float2(0.f, 1.f);
 
-	result.tex0.x = mod2 * 2.f;
-	result.tex0.y = 1.f - (div2 * 2.f);
+    result.tex0.x = mod2 * 2.f;
+    result.tex0.y = 1.f - (div2 * 2.f);
 
-	return result;
-}
-
-// ---[ Random Number Generation ]---
-
-/*
- * From Nathan Reed's blog at:
- * http://www.reedbeta.com/blog/quick-and-easy-gpu-random-numbers-in-d3d11/
-*/
-
-uint WangHash(uint seed)
-{
-	seed = (seed ^ 61) ^ (seed >> 16);
-	seed *= 9;
-	seed = seed ^ (seed >> 4);
-	seed *= 0x27d4eb2d;
-	seed = seed ^ (seed >> 15);
-	return seed;
-}
-
-uint Xorshift(uint seed)
-{
-	// Xorshift algorithm from George Marsaglia's paper
-	seed ^= (seed << 13);
-	seed ^= (seed >> 17);
-	seed ^= (seed << 5);
-	return seed;
-}
-
-float GenerateRandomNumber(inout uint seed)
-{
-	seed = WangHash(seed);
-	return float(Xorshift(seed)) * (1.f / 4294967296.f);
+    return result;
 }
 
 /**
-* Generate three components of white noise.
+* Generate three components of white noise in image-space.
 */
-float3 GetWhiteNoise(uint2 screenPosition, uint screenWidth, uint frame)
+float3 GetWhiteNoise(uint2 position, uint width, uint frame, uint distribution, float scale)
 {
-	// Generate a unique seed on screen position and time
-	uint seed = ((screenPosition.y * screenWidth) + screenPosition.x) * frame;
+    // Generate a unique seed based on:
+    // space - this thread's (x, y) position in the image
+    // time  - the current frame number
+    uint seed = ((position.y * width) + position.x) * frame;
 
-	// Generate uniformly distributed random values in the range [0, 1]
-	float3 rnd0;
-	rnd0.x = GenerateRandomNumber(seed);
-	rnd0.y = GenerateRandomNumber(seed);
-	rnd0.z = GenerateRandomNumber(seed);
+    // Generate three uniformly distributed random values in the range [0, 1]
+    float3 rnd;
+    rnd.x = GenerateRandomNumber(seed);
+    rnd.y = GenerateRandomNumber(seed);
+    rnd.z = GenerateRandomNumber(seed);
 
-	// Shift the random value into the range [-1, 1]
-	rnd0 = mad(rnd0, 2.f, - 1.f);
+    if (distribution == 1)
+    {
+        // Use a triangular distribution instead of a uniform distribution
+        
+        // Option 1: Generate a second set of random samples
+        //float3 rnd1;
+        //rnd1.x = GenerateRandomNumber(seed);
+        //rnd1.y = GenerateRandomNumber(seed);
+        //rnd1.z = GenerateRandomNumber(seed);
+        //rnd = (rnd + rnd1) / 2.f;
 
-	// Scale the noise magnitude to [-noiseScale, noiseScale]
-	return (rnd0 * noiseScale);
+        // Option 2: Transform the uniform distribution of the first sample to be triangular
+        rnd = mad(rnd, 2.f, -1.f);                      // shift to [-1, 1]
+        rnd = sign(rnd) * (1.f - sqrt(1.f - abs(rnd))); // transform from uniform to triangular
+        rnd = (rnd * 0.5f) + 0.5f;                      // shift back to [0, 1]
+    }
+
+    // D3D rounds when converting from FLOAT to UNORM
+    // Shift the random values from [0, 1] to [-0.5, 0.5]
+    rnd -= 0.5f;
+
+    // Scale the noise magnitude, values are in the range [-scale/2, scale/2]
+    // The scale should be determined by the precision (and therefore quantization amount) of the target image's format
+    return (rnd * scale);
 }
 
 /**
-* Generate three components of blue noise.
-* Blue noise textures from Christoph Peters at: http://momentsingraphics.de/BlueNoise.html
+* Generate three components of blue noise in image-space.
+* Blue noise texture from Christoph Peters at: http://momentsingraphics.de/BlueNoise.html
 */
-float3 GetBlueNoise(uint2 screenPosition, uint screenWidth, uint frame)
+float3 GetBlueNoise(uint2 position, uint width, uint frame, uint distribution, float scale)
 {
-	// Generate a unique seed based on screen position and time
-	uint seed = ((screenPosition.y * screenWidth) + screenPosition.x) * frame;
-	
-	// Choose a random blue noise slice in the texture array based on the seed
-	uint z = GenerateRandomNumber(seed) * 63;
+    // Load a blue noise value from texture based on:
+    // space - this thread's (x, y) position in the image
+    // time  - the current frame number, used to select the texture array slice
+    float3 rnd = blueNoiseArray.Load(int4(position.xy % 64, frame % 64, 0)).rgb;
 
-	// Load a blue noise value
-	float3 rnd0 = blueNoise.Load(int4(screenPosition.xy % 64, z, 0)).rgb;
-	
-	// Transform a uniform distribution on [0, 1] to a symmetric triangular distribution on [-1, 1]
-	rnd0 = mad(rnd0, 2.f, -1.f);
-	rnd0 = sign(rnd0) * (1.f - sqrt((1.f - abs(rnd0))));
+    if (distribution == 1)
+    {
+        // Use a triangular distribution instead of a uniform distribution
 
-	// Scale the noise magnitude to [-noiseScale, noiseScale]
-	return (rnd0 * noiseScale);
+        // Option 1: Load a second set of blue noise samples
+        //float3 rnd1 = blueNoiseArray.Load(int4(position.xy % 64, (frame + 1) % 64, 0)).rgb;
+        //rnd = (rnd + rnd1) / 2.f;
+
+        // Option 2: Transform the uniform distribution of the first sample to be triangular
+        rnd = mad(rnd, 2.f, -1.f);                      // shift to [-1, 1]
+        rnd = sign(rnd) * (1.f - sqrt(1.f - abs(rnd))); // transform from uniform to triangular
+        rnd = (rnd * 0.5f) + 0.5f;                      // shift back to [0, 1]
+    }
+
+    // D3D rounds when converting from FLOAT to UNORM
+    // Shift the random values from [0, 1] to [-0.5, 0.5]
+    rnd -= 0.5f;
+
+    // Scale the noise magnitude, values are in the range [-scale/2, scale/2]
+    // The scale should be determined by the precision (and therefore quantization amount) of the target image's format
+    return (rnd * scale);
+}
+
+/**
+* Generate three components of low discrepancy blue noise in image-space.
+* Blue noise texture from Christoph Peters at: http://momentsingraphics.de/BlueNoise.html
+*/
+float3 GetLDSBlueNoise(uint2 position, uint width, uint frame, uint distribution, float scale)
+{
+    static const float goldenRatioConjugate = 0.61803398875f;
+
+    // Load a blue noise value from texture
+    float3 rnd = blueNoise.Load(int3(position % 256, 0)).rgb;
+
+    // Generate a low discrepancy sequence
+    rnd = frac(rnd + goldenRatioConjugate * ((frame - 1) % 16));
+
+    if (distribution == 1)
+    {
+        // Transform the uniform distribution of the first sample to be triangular
+        // Not sure if this even makes sense...
+        rnd = mad(rnd, 2.f, -1.f);                      // shift to [-1, 1]
+        rnd = sign(rnd) * (1.f - sqrt(1.f - abs(rnd))); // transform from uniform to triangular
+        rnd = (rnd * 0.5f) + 0.5f;                      // shift back to [0, 1]
+    }
+
+    // D3D rounds when converting from FLOAT to UNORM
+    // Shift the random values from [0, 1] to [-0.5, 0.5]
+    rnd -= 0.5f;
+
+    // Scale the noise magnitude, values are in the range [-scale/2, scale/2]
+    // The scale should be determined by the precision (and therefore quantization amount) of the target image's format
+    return (rnd * scale);
 }
 
 // ---[ Pixel Shader ]---
 
 float4 PS(PSInput input) : SV_TARGET
 {
-	float3 worldPosition = float3(input.position.x, 0.f, input.position.y);
-	float3 normal = float3(0.f, 1.f, 0.f);
-	float3 lightVector = float3(lightPosition - worldPosition);
-	float3 lightDirection = normalize(lightVector);
+    float3 worldPosition = float3(input.position.x, 0.f, input.position.y);
+    float3 normal = float3(0.f, 1.f, 0.f);
+    float3 lightVector = float3(lightPosition - worldPosition);
+    float3 lightDirection = normalize(lightVector);
 
-	// Compute color
-	float3 result = saturate(color  * dot(normal, lightDirection));
-	
-	if (useNoise > 0)
-	{
-		// Compute the noise
-		float3 noise = 0;
-		if (noiseType == 0)
-		{
-			noise = GetWhiteNoise(uint2(input.position.xy), resolutionX, frameNumber);
-		}
-		else
-		{
-			noise =  GetBlueNoise(uint2(input.position.xy), resolutionX, frameNumber);
-		}
+    // Compute color
+    float3 result = saturate(color  * dot(normal, lightDirection));
+    
+    // Apply tonemapping
+    if (useTonemapping)
+    {
+        result = ACESFilm(result);
+    }
 
-		if (showNoise)
-		{
-			return float4(noise, 1.f);
-		}
+    // Dither
+    if (useDithering > 0)
+    {
+        // Compute the noise
+        float3 noise = 0;
+        if (noiseType == 0)
+        {
+            noise = GetWhiteNoise(uint2(input.position.xy), resolutionX, frameNumber, distributionType, noiseScale);
+        }
+        else if(noiseType == 1)
+        {
+            noise =  GetBlueNoise(uint2(input.position.xy), resolutionX, frameNumber, distributionType, noiseScale);
+        }
+        else if (noiseType == 2)
+        {
+            noise = GetLDSBlueNoise(uint2(input.position.xy), resolutionX, frameNumber, distributionType, noiseScale);
+        }
 
-		// Add the noise to the color
-		result += noise;
-	}
+        if (showNoise)
+        {
+            return float4(noise, 1.f);
+        }
 
-	// Gamma adjust
-	result = sqrt(result);
-	return float4(result, 1.f);
+        // Add the noise to the color
+        result += noise;
+    }
+
+    // Gamma correct
+    result = LinearToSRGB(result);
+
+    return float4(result, 1.f);
 }

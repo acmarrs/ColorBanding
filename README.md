@@ -1,13 +1,13 @@
 # Color Banding
 
-A simple D3D12 sample application that demonstrates how to use white and blue noise to mitigate color banding when rendering in SDR. To learn more, see the blog post at: http://www.visualextract.com/posts/color-banding/
+A simple D3D12 sample application that demonstrates how to use white and blue noise to dither, mitigating color banding when rendering in SDR. To learn more, see the blog post at: http://www.visualextract.com/posts/color-banding/
 
 After building and running the code, first thing I recommend you do is load up the Nsight Graphics project file (ColorBanding.nsight-gfxproj), and capture a frame of the application running. This will provide a clear view of exactly what is happening as the application is running. [Download Nsight Graphics here](https://developer.nvidia.com/nsight-graphics).
 
 ## Requirements
 
 * Windows 10 v1809, "October 2018 Update" (RS5) or later
-* Windows 10 SDK v1809 (10.0.17763.0) or later. [Download it here.](https://developer.microsoft.com/en-us/windows/downloads/sdk-archive) 
+* Windows 10 SDK v1809 (10.0.17763.0) or later. [Download it here](https://developer.microsoft.com/en-us/windows/downloads/sdk-archive), or install with the Visual Studio Installer.
 * Visual Studio 2017, 2019, or VS Code
 
 ## Command Line Arguments

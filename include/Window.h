@@ -35,5 +35,5 @@
 
 namespace Window
 {
-	HRESULT Create(LONG width, LONG height, HINSTANCE &instance, HWND &window, LPCWSTR title);
+    HRESULT Create(LONG width, LONG height, HINSTANCE &instance, HWND &window, LPCWSTR title);
 }

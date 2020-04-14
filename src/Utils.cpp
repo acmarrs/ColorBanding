@@ -46,61 +46,61 @@ namespace Utils
 
 HRESULT ParseCommandLine(LPWSTR lpCmdLine, ConfigInfo &config)
 {
-	LPWSTR* argv = NULL;
-	int argc = 0;
+    LPWSTR* argv = NULL;
+    int argc = 0;
 
-	argv = CommandLineToArgvW(GetCommandLine(), &argc);
-	if (argv == NULL)
-	{
-		MessageBox(NULL, L"Unable to parse command line!", L"Error", MB_OK);
-		return E_FAIL;
-	}
+    argv = CommandLineToArgvW(GetCommandLine(), &argc);
+    if (argv == NULL)
+    {
+        MessageBox(NULL, L"Unable to parse command line!", L"Error", MB_OK);
+        return E_FAIL;
+    }
 
-	if (argc > 1)
-	{
-		char str[256];
-		int i = 1;
-		while (i < argc)
-		{
-			wcstombs(str, argv[i], 256);
+    if (argc > 1)
+    {
+        char str[256];
+        int i = 1;
+        while (i < argc)
+        {
+            wcstombs(str, argv[i], 256);
 
-			if (strcmp(str, "-width") == 0)
-			{
-				i++;
-				wcstombs(str, argv[i], 256);
-				config.width = atoi(str);
-				i++;
-				continue;
-			}
+            if (strcmp(str, "-width") == 0)
+            {
+                i++;
+                wcstombs(str, argv[i], 256);
+                config.width = atoi(str);
+                i++;
+                continue;
+            }
 
-			if (strcmp(str, "-height") == 0)
-			{
-				i++;
-				wcstombs(str, argv[i], 256);
-				config.height = atoi(str);
-				i++;
-				continue;
-			}
+            if (strcmp(str, "-height") == 0)
+            {
+                i++;
+                wcstombs(str, argv[i], 256);
+                config.height = atoi(str);
+                i++;
+                continue;
+            }
 
-			if (strcmp(str, "-vsync") == 0)
-			{
-				i++;
-				wcstombs(str, argv[i], 256);
-				config.vsync = (atoi(str) > 0);
-				i++;
-				continue;
-			}
+            if (strcmp(str, "-vsync") == 0)
+            {
+                i++;
+                wcstombs(str, argv[i], 256);
+                config.vsync = (atoi(str) > 0);
+                i++;
+                continue;
+            }
 
-			i++;
-		}
-	}
-	else {
-		MessageBox(NULL, L"Incorrect command line usage!", L"Error", MB_OK);
-		return E_FAIL;
-	}
+            i++;
+        }
+    }
+    else {
+        MessageBox(NULL, L"Incorrect command line usage!", L"Error", MB_OK);
+        return E_FAIL;
+    }
 
-	LocalFree(argv);
-	return S_OK;
+    LocalFree(argv);
+    return S_OK;
 }
 
 //--------------------------------------------------------------------------------------
@@ -109,11 +109,11 @@ HRESULT ParseCommandLine(LPWSTR lpCmdLine, ConfigInfo &config)
 
 void Validate(HRESULT hr, LPWSTR msg)
 {
-	if (FAILED(hr))
-	{
-		MessageBox(NULL, msg, L"Error", MB_OK);
-		PostQuitMessage(EXIT_FAILURE);
-	}
+    if (FAILED(hr))
+    {
+        MessageBox(NULL, msg, L"Error", MB_OK);
+        PostQuitMessage(EXIT_FAILURE);
+    }
 }
 
 //--------------------------------------------------------------------------------------
@@ -122,21 +122,21 @@ void Validate(HRESULT hr, LPWSTR msg)
 
 vector<char> ReadFile(const string &filename)
 {
-	ifstream file(filename, ios::ate | ios::binary);
+    ifstream file(filename, ios::ate | ios::binary);
 
-	if (!file.is_open())
-	{
-		throw std::runtime_error("Error: failed to open file!");
-	}
+    if (!file.is_open())
+    {
+        throw std::runtime_error("Error: failed to open file!");
+    }
 
-	size_t fileSize = (size_t)file.tellg();
-	std::vector<char> buffer(fileSize);
+    size_t fileSize = (size_t)file.tellg();
+    std::vector<char> buffer(fileSize);
 
-	file.seekg(0);
-	file.read(buffer.data(), fileSize);
-	file.close();
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+    file.close();
 
-	return buffer;
+    return buffer;
 }
 
 //--------------------------------------------------------------------------------------
@@ -148,23 +148,23 @@ vector<char> ReadFile(const string &filename)
 */
 void FormatTexture(TextureInfo &info, UINT8* pixels)
 {
-	const UINT numPixels = (info.width * info.height);
-	const UINT oldStride = info.stride;
-	const UINT oldSize = (numPixels * info.stride);
+    const UINT numPixels = (info.width * info.height);
+    const UINT oldStride = info.stride;
+    const UINT oldSize = (numPixels * info.stride);
 
-	const UINT newStride = 4;				// uploading textures to GPU as DXGI_FORMAT_R8G8B8A8_UNORM
-	const UINT newSize = (numPixels * newStride);
-	info.pixels.resize(newSize);
+    const UINT newStride = 4;                // uploading textures to GPU as DXGI_FORMAT_R8G8B8A8_UNORM
+    const UINT newSize = (numPixels * newStride);
+    info.pixels.resize(newSize);
 
-	for (UINT i = 0; i < numPixels; i++)
-	{
-		info.pixels[i * newStride] = pixels[i * oldStride];			// R
-		info.pixels[i * newStride + 1] = pixels[i * oldStride + 1];	// G
-		info.pixels[i * newStride + 2] = pixels[i * oldStride + 2];	// B
-		info.pixels[i * newStride + 3] = 0xFF;						// A (always 1)
-	}
+    for (UINT i = 0; i < numPixels; i++)
+    {
+        info.pixels[i * newStride] = pixels[i * oldStride];            // R
+        info.pixels[i * newStride + 1] = pixels[i * oldStride + 1];    // G
+        info.pixels[i * newStride + 2] = pixels[i * oldStride + 2];    // B
+        info.pixels[i * newStride + 3] = 0xFF;                         // A (always 1)
+    }
 
-	info.stride = newStride;
+    info.stride = newStride;
 }
 
 /**
@@ -172,18 +172,18 @@ void FormatTexture(TextureInfo &info, UINT8* pixels)
 */
 TextureInfo LoadTexture(string filepath)
 {
-	TextureInfo result = {};
+    TextureInfo result = {};
 
-	// Load image pixels with stb_image
-	UINT8* pixels = stbi_load(filepath.c_str(), &result.width, &result.height, &result.stride, STBI_default);
-	if (!pixels)
-	{
-		throw runtime_error("Error: failed to load image!");
-	}
+    // Load image pixels with stb_image
+    UINT8* pixels = stbi_load(filepath.c_str(), &result.width, &result.height, &result.stride, STBI_default);
+    if (!pixels)
+    {
+        throw runtime_error("Error: failed to load image!");
+    }
 
-	FormatTexture(result, pixels);
-	stbi_image_free(pixels);
-	return result;
+    FormatTexture(result, pixels);
+    stbi_image_free(pixels);
+    return result;
 }
 
 }
